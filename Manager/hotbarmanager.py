@@ -1,6 +1,9 @@
 from Base.hotbar import Slot
+
+
 class HotBarManager:
     '''Create and manage the tower selection slots.'''
+
     def __init__(self, canvas, collision):
         self.__canvas = canvas
         self.__collision = collision
@@ -27,7 +30,8 @@ class HotBarManager:
         if self.__hotbar:
             return
         for index in range(self.__slot_count):
-            x = self.__slot_x1 + self.__slot_width / 2 + (self.__slot_width + 50) * index
+            x = self.__slot_x1 + self.__slot_width / \
+                2 + (self.__slot_width + 50) * index
             y = self.__slot_y1 + self.__slot_height / 2
             slot = Slot(
                 self.__canvas, x, y, self.__slot_width, self.__slot_height,
@@ -43,12 +47,13 @@ class HotBarManager:
         if tower_id not in self.__equipped_towers:
             # === If haven't already equipped ===
             self.__equipped_towers.append(tower_id)
-        
+
         if len(self.__equipped_towers) > self.__slot_count:
             self.__equipped_towers.pop(0)
         # === Pop the first tower if there are more towers equipped than the limit ===
         for index, slot in self.__hotbar.items():
-            slot.tower = self.__equipped_towers[index] if index < len(self.__equipped_towers) else None
+            slot.tower = self.__equipped_towers[index] if index < len(
+                self.__equipped_towers) else None
 
     def update_colors(self):
         '''Signaling which slot is empty'''

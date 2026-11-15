@@ -7,6 +7,6 @@ except ModuleNotFoundError as error:
         "Check that project packages are named consistently and Tkinter is installed."
     ) from error
 
-gameplay=Game()
+gameplay = Game()
 
 gameplay.start()

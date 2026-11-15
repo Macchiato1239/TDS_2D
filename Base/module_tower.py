@@ -1,14 +1,16 @@
-from Base.entity import Entity
 import time
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
 from Base.debuff import BurnEffect, EffectType, FreezeEffect
+from Base.entity import Entity
 from Base.rect import Rect
+
 
 @dataclass(frozen=True)
 class DpsStats:
     '''Stats for towers that can shoot'''
-    damage: float | int 
+    damage: float | int
     # === How much damage dealt per shot
     fire_rate: float | int
     # === How fast the tower shoots
@@ -43,17 +45,20 @@ class DebuffStats:
                 enemy.freeze_level += self.magnitude
         elif self.type == EffectType.BURN:
             if hasattr(enemy, "apply_effect"):
-                enemy.apply_effect(BurnEffect(self.duration, self.magnitude, self.tick))
+                enemy.apply_effect(BurnEffect(
+                    self.duration, self.magnitude, self.tick))
             else:
                 enemy.burn = self.duration
                 enemy.burn_damage = self.magnitude
                 if hasattr(enemy, "burn_tick"):
                     enemy.burn_tick = self.tick
 
+
 @dataclass(frozen=True)
 class IncomeStats:
     '''Stats for towers that can bring income'''
     income: int
+
 
 @dataclass(frozen=True)
 class TowerInfo():
@@ -64,20 +69,22 @@ class TowerInfo():
     act_range: float | int
     size: float | int
 
-    dps: DpsStats | None=None
-    debuff: DebuffStats | None=None
-    income: IncomeStats | None=None
+    dps: DpsStats | None = None
+    debuff: DebuffStats | None = None
+    income: IncomeStats | None = None
 
-class Tower(Entity, ABC): 
+
+class Tower(Entity, ABC):
     '''Physical Tower summoned using the infromation from the class TowerInfo, TowerManager performs the summoning.'''
+
     def __init__(self, TowerInfo: TowerInfo, rect: Rect) -> None:
-        self.__name=TowerInfo.name
-        self.__cost=TowerInfo.cost
-        self.__color=TowerInfo.color
-        self.__act_range=TowerInfo.act_range
-        self.__size=TowerInfo.size
+        self.__name = TowerInfo.name
+        self.__cost = TowerInfo.cost
+        self.__color = TowerInfo.color
+        self.__act_range = TowerInfo.act_range
+        self.__size = TowerInfo.size
         super().__init__(rect)
-        self.__last_act=0
+        self.__last_act = 0
 
     @property
     def name(self) -> str:
@@ -101,18 +108,22 @@ class Tower(Entity, ABC):
     @property
     def last_act(self) -> int | float:
         return self.__last_act
+
     @last_act.setter
     def last_act(self, value: int | float) -> None:
-        self.__last_act=value
+        self.__last_act = value
     # =====
+
     @property
-    def cost(self) -> int: 
+    def cost(self) -> int:
         return self.__cost
+
     @cost.setter
     def cost(self, value: int) -> None:
-        if isinstance(value, int) and value>0:
-            self.__cost=value
+        if isinstance(value, int) and value > 0:
+            self.__cost = value
     # =====
+
     @property
     def color(self) -> str:
         return self.__color
@@ -121,32 +132,35 @@ class Tower(Entity, ABC):
     @property
     def act_range(self) -> int | float:
         return self.__act_range
+
     @act_range.setter
     def act_range(self, value: int | float) -> None:
         if isinstance(value, int) or isinstance(value, float):
-            self.__act_range=value
+            self.__act_range = value
     # =====
+
     def cooldown_check(self) -> bool:
         '''Check if enough time has passed for the tower to shoot again'''
-        current_time=time.monotonic()
-        if current_time-self.__last_act<self.fire_rate:
+        current_time = time.monotonic()
+        if current_time-self.__last_act < self.fire_rate:
             return False
-        self.__last_act=current_time
-        return True 
+        self.__last_act = current_time
+        return True
 
     # ======
     @abstractmethod
     def act(self) -> None:
         '''Each tower type has its own action'''
         pass
-        
+
 
 class DpsTower(Tower):
     '''Tower that can shoot'''
+
     def __init__(self, TowerInfo: TowerInfo, rect: Rect) -> None:
         super().__init__(TowerInfo, rect)
-        self.__damage=TowerInfo.dps.damage
-        self.__fire_rate=TowerInfo.dps.fire_rate
+        self.__damage = TowerInfo.dps.damage
+        self.__fire_rate = TowerInfo.dps.fire_rate
 
     # ======
     @property
@@ -155,31 +169,35 @@ class DpsTower(Tower):
 
     @fire_rate.setter
     def fire_rate(self, value: int | float) -> None:
-        if value>0 and (isinstance(value, float) or isinstance(value, int)):
-            self.__fire_rate=value
+        if value > 0 and (isinstance(value, float) or isinstance(value, int)):
+            self.__fire_rate = value
     # ======
+
     @property
     def damage(self) -> int | float:
         return self.__damage
+
     @damage.setter
     def damage(self, value: int | float) -> None:
         if isinstance(value, int):
-            self.__damage=value
+            self.__damage = value
     # ======
+
     def act(self) -> None | int | float:
         '''Expose the output damage for the enemies to process'''
-        current_time=time.time()
-        delta_time=current_time-self.last_act
-        if delta_time>=self.__fire_rate:
-            self.last_act=current_time
+        current_time = time.time()
+        delta_time = current_time-self.last_act
+        if delta_time >= self.__fire_rate:
+            self.last_act = current_time
             return self.__damage
 
 
 class DebuffTower(DpsTower):
     '''Tower that can shoot and apply debuff with it'''
+
     def __init__(self, TowerInfo: TowerInfo, rect: Rect) -> None:
         super().__init__(TowerInfo, rect)
-        self.__debuff=TowerInfo.debuff
+        self.__debuff = TowerInfo.debuff
 
     @property
     def debuff(self) -> DebuffStats:
@@ -193,6 +211,7 @@ class DebuffTower(DpsTower):
     @property
     def magnitude(self) -> int | float:
         return self.__debuff.magnitude
+
     @magnitude.setter
     def magnitude(self, value: int | float) -> None:
         if isinstance(value, (float, int)):
@@ -201,9 +220,11 @@ class DebuffTower(DpsTower):
                 self.__debuff.tick
             )
     # =====
+
     @property
     def duration(self) -> int | float:
         return self.__debuff.duration
+
     @duration.setter
     def duration(self, value: int | float) -> None:
         if isinstance(value, (float, int)):
@@ -231,23 +252,26 @@ class DebuffTower(DpsTower):
 
 class Farm(Tower):
     '''Tower that makes money'''
+
     def __init__(self, TowerInfo: TowerInfo, rect: Rect) -> None:
         super().__init__(TowerInfo, rect)
-        self.__income=TowerInfo.income.income
+        self.__income = TowerInfo.income.income
 
     # =====
     @property
     def income(self) -> int:
         return self.__income
+
     @income.setter
     def income(self, value: int | float) -> None:
         if isinstance(value, int):
-            self.__income=value
+            self.__income = value
 
     @property
     def wave_income(self) -> int:
         return self.__income
     # =====
+
     def act(self) -> None:
         '''The tower only action is existing, its number in the game will count towards how much money is gained per wave'''
         return None

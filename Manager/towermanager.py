@@ -11,7 +11,7 @@ class TowerManager:
         self.__collision = collision
         self.__active_towers = []
         self.__projectiles = []
-        self.__max_active_towers=30
+        self.__max_active_towers = 30
         # === list of towers placed on the map
         self.__current_tower = None
         self.__current_tower_signal = Rect(canvas, 0, 0, 30, 30, "red")
@@ -21,7 +21,7 @@ class TowerManager:
     def farm_income_per_wave(self):
         '''Total income granted by all towers when a wave completes.'''
         return sum(tower.wave_income for tower in self.__active_towers)
-        
+
     @property
     def active_towers(self):
         return self.__active_towers
@@ -60,7 +60,7 @@ class TowerManager:
             # === Check if a tower is selected ===
             return False, money
 
-        if len(self.__active_towers)==self.__max_active_towers:
+        if len(self.__active_towers) == self.__max_active_towers:
             # === Check if the number of towers has hit the limit
             return False, money
 
@@ -94,23 +94,22 @@ class TowerManager:
         if self.__current_tower is not None:
             # === If a tower is being selected, user cannot investigate the placed towers ===
             return
-        x,y= event.x, event.y
+        x, y = event.x, event.y
         # Clear the old selection first, including when clicking empty space.
         self.__current_investigated = None
         # === Check the click coordinate against all towers ===
         for i in self.__active_towers:
-            collide=self.__collision.compare_cord_rect(x,y,[i.rect])
+            collide = self.__collision.compare_cord_rect(x, y, [i.rect])
             if collide:
-                self.__current_investigated=i
+                self.__current_investigated = i
                 break
-
 
     def delete_tower(self):
         '''Delete the currently investigated tower'''
         if self.__current_investigated == None:
             return
-        tower=self.__current_investigated
-        self.__current_investigated=None
+        tower = self.__current_investigated
+        self.__current_investigated = None
         self.__active_towers.remove(tower)
         if tower.rect in self.__collision.taken:
             self.__collision.taken.remove(tower.rect)
@@ -127,12 +126,13 @@ class TowerManager:
             damage = tower.act()
             if not damage:
                 continue
-            in_range = [enemy for enemy in enemies if collision.range_enemy_tower(enemy, tower)]
+            in_range = [
+                enemy for enemy in enemies if collision.range_enemy_tower(enemy, tower)]
             # === Collect enemies within the act range of tower ===
             target = self.__enemy_sorter(in_range)
             # === Find the closest enemy to base in the tower range ===
             if target == 0:
-            # === None in range ===
+                # === None in range ===
                 continue
 
             # === Create projectiles ===

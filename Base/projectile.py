@@ -1,7 +1,9 @@
 import math
 
+
 class Projectile:
     '''Visual Projectile when a shooter tower attack, simply visual, no collision or anything else included'''
+
     def __init__(self, canvas, start: int, target: int, speed=1500) -> None:
         self.__canvas = canvas
 

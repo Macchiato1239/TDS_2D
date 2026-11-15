@@ -1,25 +1,28 @@
-from Head.module_window import Window
-from States.states import State
-from States.gameflow import GameFlow
-from States.pause import PausedState
-from States.menu import MenuState
-from States.victory import VictoryState
-from States.lose import LostState
 import tkinter as tk
+
+from Head.module_window import Window
+from States.gameflow import GameFlow
+from States.lose import LostState
+from States.menu import MenuState
+from States.pause import PausedState
+from States.states import State
+from States.victory import VictoryState
+
 
 class Game:
     def __init__(self) -> None:
-        self.__window_object=Window()
-        self.__window=self.__window_object.window
+        self.__window_object = Window()
+        self.__window = self.__window_object.window
         # === Pass this to the other states ===
-        self.__state=State.MENU
-        self.__game=None 
-        
-        self.__pause=PausedState(self.__window_object) #To be executed while state is paused
-        self.__menu=MenuState(self.__window_object)
-        self.__difficulty=self.__menu.difficulty
-        self.__victory=VictoryState(self.__window_object)
-        self.__lose=LostState(self.__window_object)
+        self.__state = State.MENU
+        self.__game = None
+
+        # To be executed while state is paused
+        self.__pause = PausedState(self.__window_object)
+        self.__menu = MenuState(self.__window_object)
+        self.__difficulty = self.__menu.difficulty
+        self.__victory = VictoryState(self.__window_object)
+        self.__lose = LostState(self.__window_object)
 
         '''Binding input events to input source'''
         self.__window.bind("<KeyPress>", self.toggle_pause, add="+")
@@ -27,8 +30,6 @@ class Game:
 
         # Canvas-local coordinates match the coordinates used by button hit tests.
         self.__window_object.canva.bind("<Button-1>", self.click_manager)
-
-
 
     def click_manager(self, event: tk.Event) -> str:
         '''Handle actions happening within the main menu'''
@@ -115,19 +116,18 @@ class Game:
         self.__state = State.MENU
         self.__menu.enter()
 
-
     def toggle_pause(self, event: tk.Event) -> None:
         # === Pause the game ===
         key = event.keysym.lower()
         if key == "r" and self.__state == State.PLAYING:
-            self.__state=State.PAUSED
+            self.__state = State.PAUSED
             self.__pause.enter()
             self.__game.exit()
 
         # === Continue the game ===
         elif key == "escape" or (key == "r" and self.__state == State.PAUSED):
-            if self.__state==State.PAUSED:
-                self.__state=State.PLAYING
+            if self.__state == State.PAUSED:
+                self.__state = State.PLAYING
                 self.__pause.exit()
                 self.__game.enter()
 
@@ -143,7 +143,7 @@ class Game:
         if result == State.LOST:
             self.__lose.enter()
             # === Disply losing menu ===
-            
+
         elif result == State.VICTORY:
             self.__victory.enter()
             # === Display victory menu ===
@@ -162,7 +162,3 @@ class Game:
         if event.keysym.lower() == "s":
             # === Destroy the main window ===
             self.__window.destroy()
-
-        
-
-

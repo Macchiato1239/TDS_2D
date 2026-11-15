@@ -9,6 +9,7 @@ from Base.exceptions import (
 )
 from difficulty import diff
 
+
 class EnemyManager:
     '''Spawn waves and update enemy movement, effects, deaths, and base damage.'''
 
@@ -24,7 +25,7 @@ class EnemyManager:
         self.__wave_progress = 0
         self.__game_progress = 0
         self.__base_damage = 0
-        self.__completed_waves=0
+        self.__completed_waves = 0
         self.__time_til_next_wave = 3.0
         self.__time_since_last_wave = 0.0
         self.__waiting_for_next_wave = False
@@ -42,10 +43,11 @@ class EnemyManager:
     @property
     def completed_waves(self):
         return self.__completed_waves
-    @property 
+
+    @property
     def is_complete(self):
         return self.__game_progress == -1 and not self.__active_enemies
-    
+
     @property
     def base_damage(self):
         return self.__base_damage
@@ -53,7 +55,8 @@ class EnemyManager:
     @base_damage.setter
     def base_damage(self, value):
         if isinstance(value, (float, int)):
-            self.__base_damage=value
+            self.__base_damage = value
+
     @property
     def active_enemies(self):
         return self.__active_enemies
@@ -120,7 +123,8 @@ class EnemyManager:
                         f"Enemy_Dictionary has no entry for key {enemy_id!r}"
                     ) from error
                 except TypeError as error:
-                    raise TypeError("Wave enemy IDs must be hashable dictionary keys") from error
+                    raise TypeError(
+                        "Wave enemy IDs must be hashable dictionary keys") from error
                 self.spawn(enemy_info)
                 self.__time_til_next_spawn = delay
                 self.__time_since_last_spawn = 0
@@ -132,7 +136,7 @@ class EnemyManager:
                     self.__wave_progress += 1
 
         reward = 0
-        self.__base_damage=0
+        self.__base_damage = 0
         for current_enemy in self.__active_enemies[:]:
             try:
                 destination = self.__path_points[current_enemy.progress]
@@ -156,7 +160,6 @@ class EnemyManager:
                 self.__active_enemies.remove(current_enemy)
                 current_enemy.delete()
                 continue
-
 
             # === Check if enemy reached a coordinate in the paths (corner or base) ===
             if reached:

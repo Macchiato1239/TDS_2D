@@ -1,6 +1,9 @@
 import tkinter as tk
+
+
 class Window:
     '''The main window of the game, display everything inside it'''
+
     def __init__(self) -> None:
         # === Dimensions ===
         self.__window_width = 1000
@@ -31,16 +34,16 @@ class Window:
     @property
     def window_width(self) -> int:
         return self.__window_width
-    
+
     @window_width.setter
     def window_width(self, value: int) -> None:
         if isinstance(value, int):
-            self.__window_width=value
+            self.__window_width = value
 
     @property
     def window_height(self) -> int:
         return self.__window_height
-    
+
     @window_height.setter
     def window_height(self, value: int) -> None:
         if isinstance(value, int):
@@ -49,7 +52,7 @@ class Window:
     @property
     def bg_color(self) -> str:
         return self.__bg_color
-    
+
     @bg_color.setter
     def bg_color(self, value: str) -> None:
         if isinstance(value, str):
@@ -63,7 +66,7 @@ class Window:
     @property
     def running(self) -> bool:
         return self.__running
-    
+
     @running.setter
     def running(self, value: bool) -> None:
         if isinstance(value, bool):

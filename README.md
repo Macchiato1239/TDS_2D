@@ -1,5 +1,4 @@
-# Link to repo:
-https://github.com/Macchiato1239/Plant-and-Bees
+
 
 # WHat is included:
 1. Settings to run the game
@@ -31,6 +30,9 @@ https://github.com/Macchiato1239/Plant-and-Bees
 # 4. Structure of the game
 1. This project uses tkinter, which is a BUILT IN module of python, to create windows and handle visual implementation.
 2. 
+-> when going through the structure, talk about the main behaviors, universal behavior, what class it inherits from and purpose, explain from top to bottom (important to specific)
+- Folder Head contains the game class, which manages the state of the game: PAUSED, PLAYING, VICTORY, LOST, MENU. The first state of the game is always MENU as the player will see the main menu, select the difficulty before playing the game (switching the game state to PLAYING). All the state class inherits from the 
+- The majority of the code is managed within gameflow.py which gets executed when game state is PLAYING. Gameflow 
 
 # 5. Testing
 Steps to run the tests
@@ -56,3 +58,4 @@ python3 -m pip install --break-system-packages pytest pytest-cov
 Previously, i designed the towers in a way that every behavior is handled inside tower manager. This makes future update and modification much harder, for example: add a new tower type would require modifying codes in dictionary, module_tower and tower manager (too much and a bad design i would say). Apparently, this does not also follow the second priciple of SOLID
 
 Even though i have thought of this before, a better design should be make tower properties the same among ALL tower types, and make only tower of the right type the right to use them. This means adding tower type requires less modification in tower manager, tower and dictionary
+===

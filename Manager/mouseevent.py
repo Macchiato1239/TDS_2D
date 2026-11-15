@@ -1,5 +1,6 @@
 class MouseHandler:
     '''Translate input events into game actions.'''
+
     def __init__(self, game_flow):
         self.__game_flow = game_flow
 

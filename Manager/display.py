@@ -1,22 +1,23 @@
 class Display:
     '''Manages canvas text and preview towers before placement.'''
+
     def __init__(self, canvas, money, health, wave):
         self.__canvas = canvas
         # === Stats display ===
         self.__money_display = canvas.create_text(
-            100, 50, text = f"Cash: {money}", font=("Arial", 24), fill="green")
+            100, 50, text=f"Cash: {money}", font=("Arial", 24), fill="green")
         self.__health_display = canvas.create_text(
-            500, 50, text = f"Health: {health}", font=("Arial", 24), fill="red")
+            500, 50, text=f"Health: {health}", font=("Arial", 24), fill="red")
         self.__wave_display = canvas.create_text(
-            700, 50, text = f"Wave {wave}", font=("Arial", 20), fill="black")
+            700, 50, text=f"Wave {wave}", font=("Arial", 20), fill="black")
         self.__next_wave_display = canvas.create_text(
             850, 50, text="", font=("Arial", 16), fill="black")
 
         # === Placement preview ===
         self.__range_circle = canvas.create_oval(
-            0, 0, 0, 0, outline = "black", stipple="gray12", state="hidden")
+            0, 0, 0, 0, outline="black", stipple="gray12", state="hidden")
         self.__space_taken_rect = canvas.create_rectangle(
-            0, 0, 0, 0, fill = "orange", outline="black", stipple="gray12", state="hidden")
+            0, 0, 0, 0, fill="orange", outline="black", stipple="gray12", state="hidden")
 
     @property
     def money_display(self):
@@ -32,7 +33,8 @@ class Display:
 
     @health_display.setter
     def health_display(self, value):
-        self.__canvas.itemconfig(self.__health_display, text=f"Health: {value}")
+        self.__canvas.itemconfig(
+            self.__health_display, text=f"Health: {value}")
 
     @property
     def wave_display(self):
@@ -63,7 +65,8 @@ class Display:
         if tower_info is None:
             # === If none selected, keeps the two objects hidden ===
             self.__canvas.itemconfigure(self.__range_circle, state="hidden")
-            self.__canvas.itemconfigure(self.__space_taken_rect, state="hidden")
+            self.__canvas.itemconfigure(
+                self.__space_taken_rect, state="hidden")
             return
 
         reach = tower_info.act_range

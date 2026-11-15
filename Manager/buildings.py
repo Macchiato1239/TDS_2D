@@ -1,7 +1,9 @@
 from Base.build import Base, Path, Spawn
 
+
 class Buildings:
     '''Manage the spawn, base, and path geometry for a game map.'''
+
     def __init__(self, canvas, base_health):
         self.__spawn = Spawn(canvas, 0, 300)
         self.__base = Base(canvas, base_health, 900, 300)

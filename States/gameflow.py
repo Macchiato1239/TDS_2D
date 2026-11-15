@@ -1,7 +1,7 @@
 import time
 import tkinter as tk
 from typing import Callable
-from States.states import GameState, State
+
 from Manager.buildings import Buildings
 from Manager.collision import CollisionManager
 from Manager.display import Display
@@ -9,16 +9,18 @@ from Manager.enemymanager import EnemyManager
 from Manager.hotbarmanager import HotBarManager
 from Manager.mouseevent import MouseHandler
 from Manager.towermanager import TowerManager
+from States.states import GameState, State
 
 
 class GameFlow(GameState):
     '''Create the game and coordinate its frame-by-frame flow.'''
+
     def __init__(self, window: tk.Tk, difficulty: int, finish_game: Callable):
         super().__init__(window)
         self.__on_finish = finish_game
         canvas = self.window.canva
         self.__existing_canvas_items = set(canvas.find_all())
-        self.__paused=False
+        self.__paused = False
         self.__disposed = False
         self.__after_id = None
 
@@ -31,7 +33,7 @@ class GameFlow(GameState):
         self.__base_health = 100
         self.__starting_money = 750
         self.__money = self.__starting_money
-        self.__paid_wave_count=0
+        self.__paid_wave_count = 0
 
         # === Used to calculate delta time ===
         self.__last_time = time.time()
@@ -45,14 +47,16 @@ class GameFlow(GameState):
         )
         self.__hotbar = HotBarManager(canvas, self.__collision)
         self.__towers = TowerManager(canvas, self.__collision)
-        self.__enemies = EnemyManager(canvas, difficulty, self.__buildings.spawn, self.__buildings.path_points)
+        self.__enemies = EnemyManager(
+            canvas, difficulty, self.__buildings.spawn, self.__buildings.path_points)
 
         # === Put the enemies' path into unplaceable place for towers ===
         for path in self.__buildings.paths:
             self.__collision.taken.append(path.rect)
 
         # === Display manager, responsible for some of the game's UI: Cash, Wave number, base health, time til next wave, etc
-        self.__display = Display(canvas, self.__money, self.__base_health, len(self.__enemies.game_info))
+        self.__display = Display(
+            canvas, self.__money, self.__base_health, len(self.__enemies.game_info))
         self.__mouse_handler = MouseHandler(self)
 
     def enter(self) -> None:
@@ -142,13 +146,14 @@ class GameFlow(GameState):
             # === Process enemies movement, death and debuff ===
             reward = self.__enemies.update(delta_time, self.window.canva)
             self.__money += reward
-            self.__base_health = max(0, self.__base_health - self.__enemies.base_damage)
+            self.__base_health = max(
+                0, self.__base_health - self.__enemies.base_damage)
 
             # === Process tower actions ===
             self.__towers.update(
                 self.__enemies.active_enemies, self.__collision, delta_time
             )
-            
+
             # === Amount of money gained from farms per wave ===
             completed = self.__enemies.completed_waves
             newly_completed = completed - self.__paid_wave_count
@@ -185,14 +190,13 @@ class GameFlow(GameState):
         # Keep placement mode active after invalid placements so the player
         # can choose another spot.
         if self.__towers.current_tower is not None:
-            placed, remaining_money = self.__towers.place_tower(x, y, self.__money)
+            placed, remaining_money = self.__towers.place_tower(
+                x, y, self.__money)
             if placed:
                 self.__money = remaining_money
             return
 
         self.__towers.investigate_tower(event)
-
-
 
     def handle_key(self, event: tk.Event) -> None:
         '''Handle keyboards input'''
@@ -211,7 +215,7 @@ class GameFlow(GameState):
     def game_over_check(self) -> bool:
         '''Check if the game is over, either winning or losing'''
         if self.__base_health <= 0:
-            #  === Clear placement mode before handing input over to the result overlay. 
+            #  === Clear placement mode before handing input over to the result overlay.
             # This also resets the hotbar selection indicator. ===
             self.__towers.cancel_selection()
             self.__on_finish(State.LOST)

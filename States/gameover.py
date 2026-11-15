@@ -1,7 +1,9 @@
-from Base.button import Button
-from States.states import GameState
-from Manager.collision import CollisionManager
 import tkinter as tk
+
+from Base.button import Button
+from Manager.collision import CollisionManager
+from States.states import GameState
+
 
 class GameOverState(GameState):
     '''Show a result overlay with menu and restart actions.'''
@@ -13,7 +15,7 @@ class GameOverState(GameState):
         height = self.window.window_height
         center_x = width / 2
         center_y = height / 2
-        
+
         panel_half_height = 205 if include_resume else 170
         self.__panel = self.__canvas.create_rectangle(
             center_x - 250, center_y - panel_half_height,
@@ -43,7 +45,7 @@ class GameOverState(GameState):
             200, 60, "Restart"
         )
 
-        # === Collision manager for checking button clicks 
+        # === Collision manager for checking button clicks
         self.__collision = CollisionManager()
         for item_id in self.__item_ids():
             self.__canvas.itemconfigure(item_id, state="hidden")
@@ -86,5 +88,6 @@ class GameOverState(GameState):
             self.__restart_button.text,
         ]
         if self.__resume_button is not None:
-            item_ids.extend((self.__resume_button.rect_id, self.__resume_button.text))
+            item_ids.extend((self.__resume_button.rect_id,
+                            self.__resume_button.text))
         return tuple(item_ids)

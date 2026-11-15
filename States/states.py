@@ -1,6 +1,8 @@
-from enum import Enum, auto
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 import tkinter as tk
+
+
 class State(Enum):
     '''States of the game'''
     MENU = auto()
@@ -10,10 +12,13 @@ class State(Enum):
     VICTORY = auto()
 
 # === Today i learnt about the finite state machine, it's quite a good way to manage states of a game ===
+
+
 class GameState(ABC):
     '''Finite State Machine'''
+
     def __init__(self, window) -> None:
-        self.__window=window
+        self.__window = window
 
     @property
     def window(self) -> tk.Tk:
@@ -33,4 +38,3 @@ class GameState(ABC):
     def handle_click(self, event: tk.Tk):
         '''Handle all clicking events'''
         pass
-

@@ -1,8 +1,10 @@
 from Base.button import Button
 from dictionary import Tbook
 
+
 class Slot(Button):
     '''Contains equipped towers, interact to select a tower for next placement'''
+
     def __init__(self, canvas, cord_x: int, cord_y: int, width: int, height: int, tower=None, fill="black") -> None:
         super().__init__(canvas, cord_x, cord_y, width, height, fill=fill, text="None")
         self.__canvas = canvas
@@ -28,24 +30,24 @@ class Slot(Button):
     @tower.setter
     def tower(self, value: int | None) -> None:
         if value is None or isinstance(value, int):
-            self.__tower=value
+            self.__tower = value
             if value is None:
                 self.text = "None"
-                self.__canvas.itemconfig(self.__tower_dps, text="", state="hidden")
+                self.__canvas.itemconfig(
+                    self.__tower_dps, text="", state="hidden")
                 self.__canvas.itemconfig(self.__cost, text="", state="hidden")
                 return
 
             tower_info = Tbook.get(value)
             self.text = tower_info.name
-            self.__canvas.itemconfig(self.__cost, text=f"Cost: {tower_info.cost}", state="normal")
+            self.__canvas.itemconfig(
+                self.__cost, text=f"Cost: {tower_info.cost}", state="normal")
 
             if tower_info.dps is None or tower_info.dps.fire_rate <= 0:
                 dps_text = "DPS: 0"
             else:
-                dps = round(tower_info.dps.damage / tower_info.dps.fire_rate,1)
+                dps = round(tower_info.dps.damage /
+                            tower_info.dps.fire_rate, 1)
                 dps_text = f"DPS: {dps:g}"
-            self.__canvas.itemconfig(self.__tower_dps, text=dps_text, state="normal")
-
-
-
-
+            self.__canvas.itemconfig(
+                self.__tower_dps, text=dps_text, state="normal")
