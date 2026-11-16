@@ -188,10 +188,10 @@ If you looked into the previous commits, the initial name of the project is plan
 But i changed the project to simply tower defense, which is rather basic, this is mainly because i faced many difficulties while trying to implement the game core functions and had to keep modifying its structures. 
 Due to the difficulties of the project that i put myself on, i decided to strip the project of its world building so that i can focus on the technical side of it. If i had more time, i would have gotten into world building and make the towers and enemies more balanced, interesting. Initially i also made more than 3 tower types and intended to implement buff for enemies, but i supposed that would be scope creep for what the purpose of this project.
 Even though it's a hard lesson to learn, i believe that with better time management and a less tight deadline, implementing both the system and then refining plus adding world building can be possible.
----
+
 I also want to talk about what i have learnt.
 The biggest lesson is probably refining the structure of the game too late into the project. Particularly, i spent 2 days on the project building enemy and tower system, i could make enemy run along the path and place tower down. At that point i haven't made projectile nor make the tower shoot yet. The problem here is that i put most of the code functions inside one class, the "game" class and put that class inside main.py. This definitely violates the first principle of **SOLID**, and perhaps some others, but i only noticed it when the project became harder to manage and code starts to look very ugly.
 It took me 6 hours to split the game class into appropriately smaller classes. Even though the refinement made the code look much better, i believe that it can be improved, its just that i am too far into the project to do anything about it now.
 If i were to start this project all again or start another project, i would start by implenting the most basic functions of the project and put them inside different classes, and each of them should handle only one responsibility.
----
+
 One thing i also learnt is **type hinting**, even though its not in the rubric, i noticed my friend Jack who was working on his project. Jack used type hinting and docstring for every single attributes or functions. It looks beautiful. I spent an hour on adding type hinting to my projects. Even though it doesn't affect the code, i think it serves to maintain and manage the code better for further development.
