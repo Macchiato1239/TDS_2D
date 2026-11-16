@@ -13,7 +13,7 @@ except ModuleNotFoundError:
     tkinter_stub = types.ModuleType("tkinter")
     tkinter_stub.TclError = type("TclError", (Exception,), {})
     tkinter_stub.Tk = lambda: None
-    tkinter_stub.Canvas = lambda *args, **kwargs: None
+    tkinter_stub.Canvas = lambda parent, width, height, bg: None
     sys.modules["tkinter"] = tkinter_stub
 
 
@@ -29,24 +29,55 @@ class FakeCanvas:
     def _create(self, kind, coords, options):
         item_id = self.next_id
         self.next_id += 1
-        self.items[item_id] = {"kind": kind, "coords": tuple(coords), **options}
+        item = {"kind": kind, "coords": tuple(coords)}
+        item.update(options)
+        self.items[item_id] = item
         return item_id
 
-    def create_rectangle(self, *coords, **options):
-        return self._create("rectangle", coords, options)
+    @staticmethod
+    def _options(fill=None, outline=None, width=None, stipple=None, state=None,
+                 text=None, font=None):
+        options = {}
+        if fill is not None:
+            options["fill"] = fill
+        if outline is not None:
+            options["outline"] = outline
+        if width is not None:
+            options["width"] = width
+        if stipple is not None:
+            options["stipple"] = stipple
+        if state is not None:
+            options["state"] = state
+        if text is not None:
+            options["text"] = text
+        if font is not None:
+            options["font"] = font
+        return options
 
-    def create_oval(self, *coords, **options):
-        return self._create("oval", coords, options)
+    def create_rectangle(self, x1, y1, x2, y2, fill=None, outline=None,
+                         width=None, stipple=None, state=None):
+        options = self._options(fill, outline, width, stipple, state)
+        return self._create("rectangle", (x1, y1, x2, y2), options)
 
-    def create_text(self, *coords, **options):
-        return self._create("text", coords, options)
+    def create_oval(self, x1, y1, x2, y2, fill=None, outline=None,
+                    width=None, stipple=None, state=None):
+        options = self._options(fill, outline, width, stipple, state)
+        return self._create("oval", (x1, y1, x2, y2), options)
 
-    def coords(self, item_id, *coords):
-        if coords:
-            self.items[item_id]["coords"] = tuple(coords)
+    def create_text(self, x, y, text="", font=None, fill=None, state=None):
+        options = self._options(text=text, font=font, fill=fill, state=state)
+        return self._create("text", (x, y), options)
+
+    def coords(self, item_id, x1=None, y1=None, x2=None, y2=None):
+        if x1 is not None and y1 is not None:
+            coordinates = (x1, y1)
+            if x2 is not None and y2 is not None:
+                coordinates += (x2, y2)
+            self.items[item_id]["coords"] = coordinates
         return self.items[item_id]["coords"]
 
-    def itemconfig(self, item_id, **options):
+    def itemconfig(self, item_id, text=None, state=None, fill=None):
+        options = self._options(text=text, state=state, fill=fill)
         self.items[item_id].update(options)
 
     itemconfigure = itemconfig
@@ -135,4 +166,4 @@ def window():
 
 @pytest.fixture
 def event():
-    return lambda x=0, y=0, **values: SimpleNamespace(x=x, y=y, **values)
+    return lambda x=0, y=0: SimpleNamespace(x=x, y=y)

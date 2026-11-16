@@ -1,6 +1,5 @@
+# This was used to record bugs, ideas for improvement during the development of the project
 # Improvement
-3. Display stat
-4. uml diagram
-5. Apply pep8
+Empty
 # Clean up
-1. Rect DOES have change color and check if cord overlap
+Empty

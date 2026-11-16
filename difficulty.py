@@ -21,9 +21,10 @@ def make_wave(*groups):
 
 diff = Difficulty()
 
-# Enemy IDs from dictionary.py:
+# === Enemy IDs from dictionary.py ===:
 # 1 normal (6 HP), 2 quick (8), 3 heavy (30), 4 abnormal (12),
 # 5 swift (20), 6 elite abnormal (150), 7 speedy boss (500), 8 giant boss (2000).
+# === ===
 diff.add("normal", [
     make_wave((1, 8, 0.7)),
     make_wave((1, 5, 0.55), (2, 4, 0.7)),

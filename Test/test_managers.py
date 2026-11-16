@@ -14,6 +14,15 @@ from Manager.mouseevent import MouseHandler
 from Manager.towermanager import TowerManager
 
 
+def enemy_manager_with_waves(canvas, spawn, path_points, waves):
+    original_waves = diff.get("normal")
+    diff.add("normal", waves)
+    try:
+        return EnemyManager(canvas, 1, spawn, path_points)
+    finally:
+        diff.add("normal", original_waves)
+
+
 def test_collision_hit_testing_and_distances(canvas):
     collision = CollisionManager()
     rect = Rect(canvas, 10, 20, 30, 40)
@@ -45,34 +54,47 @@ def test_difficulty_storage_and_wave_builder():
     assert len(diff.get("normal")) < len(diff.get("hard")) < len(diff.get("insane"))
 
 
-def test_hotbar_slots_equipping_and_colors(canvas, monkeypatch):
+def test_hotbar_slots_equipping_and_colors(canvas):
     from dictionary import Tbook
 
-    monkeypatch.setitem(Tbook.dictionary, 5, Tbook.dictionary[1])
-    monkeypatch.setitem(Tbook.dictionary, 6, Tbook.dictionary[1])
-    collision = CollisionManager()
-    hotbar = HotBarManager(canvas, collision)
-    hotbar.create_slots()
-    assert len(hotbar.hotbar) == 5
-    assert len(collision.interactive) == 5
-    assert hotbar.hotbar[0].tower is None
-    hotbar.equip_tower("bad")
-    hotbar.equip_tower(1)
-    hotbar.equip_tower(2)
-    assert hotbar.hotbar[0].tower == 1
-    assert hotbar.hotbar[1].tower == 2
-    assert hotbar.contains(hotbar.hotbar[0])
-    hotbar.update_colors()
-    assert hotbar.hotbar[0].rect.fill == "#bd7e1a"
-    assert hotbar.hotbar[4].rect.fill == "black"
-    hotbar.equip_tower(3)
-    hotbar.equip_tower(4)
-    hotbar.equip_tower(5)
-    hotbar.equip_tower(6)
-    assert hotbar.equipped_towers == [2, 3, 4, 5, 6]
-    assert hotbar.hotbar[0].tower == 2
-    hotbar.create_slots()
-    assert len(collision.interactive) == 5
+    missing = object()
+    old_5 = Tbook.dictionary.get(5, missing)
+    old_6 = Tbook.dictionary.get(6, missing)
+    Tbook.dictionary[5] = Tbook.dictionary[1]
+    Tbook.dictionary[6] = Tbook.dictionary[1]
+    try:
+        collision = CollisionManager()
+        hotbar = HotBarManager(canvas, collision)
+        hotbar.create_slots()
+        assert len(hotbar.hotbar) == 5
+        assert len(collision.interactive) == 5
+        assert hotbar.hotbar[0].tower is None
+        hotbar.equip_tower("bad")
+        hotbar.equip_tower(1)
+        hotbar.equip_tower(2)
+        assert hotbar.hotbar[0].tower == 1
+        assert hotbar.hotbar[1].tower == 2
+        assert hotbar.contains(hotbar.hotbar[0])
+        hotbar.update_colors()
+        assert hotbar.hotbar[0].rect.fill == "#bd7e1a"
+        assert hotbar.hotbar[4].rect.fill == "black"
+        hotbar.equip_tower(3)
+        hotbar.equip_tower(4)
+        hotbar.equip_tower(5)
+        hotbar.equip_tower(6)
+        assert hotbar.equipped_towers == [2, 3, 4, 5, 6]
+        assert hotbar.hotbar[0].tower == 2
+        hotbar.create_slots()
+        assert len(collision.interactive) == 5
+    finally:
+        if old_5 is missing:
+            Tbook.dictionary.pop(5, None)
+        else:
+            Tbook.dictionary[5] = old_5
+        if old_6 is missing:
+            Tbook.dictionary.pop(6, None)
+        else:
+            Tbook.dictionary[6] = old_6
 
 
 def test_display_text_and_range_visibility(canvas):
@@ -154,7 +176,7 @@ def test_tower_selection_placement_validation_and_deletion(tower_setup):
     manager.delete_tower()
 
 
-def test_tower_manager_farm_income_and_projectile_debuff(tower_setup, monkeypatch, canvas):
+def test_tower_manager_farm_income_and_projectile_debuff(tower_setup, canvas):
     manager, collision = tower_setup
     manager.select_tower_card(4)
     assert manager.place_tower(100, 100, 1000) == (True, 800)
@@ -164,8 +186,6 @@ def test_tower_manager_farm_income_and_projectile_debuff(tower_setup, monkeypatc
     enemy = Enemy(canva=manager._TowerManager__canvas, name="target", x1=190, y1=90,
                   width=20, height=20, health=50, speed=1, color="green")
     enemy.distance_covered = 3
-    monkeypatch.setattr("Base.module_tower.time.time", lambda: 10)
-    collision.range_enemy_tower = lambda target, tower: True
     manager.update([enemy], collision, 0.1)
     assert enemy.health == 45
     assert enemy.freeze == 0.4
@@ -208,12 +228,11 @@ def test_tower_manager_ignores_support_towers_and_out_of_range_targets(tower_set
     assert manager._TowerManager__projectiles == []
 
 
-def test_enemy_manager_wave_spawn_rewards_break_and_completion(canvas, monkeypatch, event):
-    monkeypatch.setattr(diff, "get", lambda key: [
-        [[1, 0]], [[2, 0]],
-    ])
+def test_enemy_manager_wave_spawn_rewards_break_and_completion(canvas, event):
     spawn = Spawn(canvas, 0, 0)
-    manager = EnemyManager(canvas, 1, spawn, [(0, 0), (100, 0)])
+    manager = enemy_manager_with_waves(
+        canvas, spawn, [(0, 0), (100, 0)], [[[1, 0]], [[2, 0]]]
+    )
     assert manager.display_wave == "Wave 1/2"
     assert manager.next_wave_countdown == ""
     assert manager.update(0, canvas) == 0
@@ -234,10 +253,11 @@ def test_enemy_manager_wave_spawn_rewards_break_and_completion(canvas, monkeypat
     assert manager.display_wave == "Wave 2/2"
 
 
-def test_enemy_manager_base_damage_branch(canvas, monkeypatch):
-    monkeypatch.setattr(diff, "get", lambda key: [[ [1, 0] ]])
+def test_enemy_manager_base_damage_branch(canvas):
     spawn = Spawn(canvas, 0, 0)
-    manager = EnemyManager(canvas, 1, spawn, [(0, 0), (10, 0)])
+    manager = enemy_manager_with_waves(
+        canvas, spawn, [(0, 0), (10, 0)], [[[1, 0]]]
+    )
     enemy = manager.spawn(__import__("dictionary").Ebook.get(1))
     manager._EnemyManager__time_til_next_spawn = 100
     enemy.progress = 1
@@ -257,9 +277,11 @@ def test_enemy_manager_difficulty_accessors(canvas, level, key):
     assert manager.base_damage == 5
 
 
-def test_enemy_manager_spawns_multiple_enemies_in_wave(canvas, monkeypatch):
-    monkeypatch.setattr(diff, "get", lambda key: [[[1, 0.5], [2, 0]]])
-    manager = EnemyManager(canvas, 1, Spawn(canvas, 0, 0), [(0, 0), (100, 0)])
+def test_enemy_manager_spawns_multiple_enemies_in_wave(canvas):
+    manager = enemy_manager_with_waves(
+        canvas, Spawn(canvas, 0, 0), [(0, 0), (100, 0)],
+        [[[1, 0.5], [2, 0]]],
+    )
     manager.update(0, canvas)
     assert len(manager.active_enemies) == 1
     manager.update(0.25, canvas)
@@ -286,26 +308,30 @@ def test_enemy_manager_rejects_bad_difficulty_and_delta(canvas):
         manager.update(-1, canvas)
 
 
-def test_enemy_manager_reports_malformed_wave_enemy_and_path_data(canvas, monkeypatch):
+def test_enemy_manager_reports_malformed_wave_enemy_and_path_data(canvas):
     spawn = Spawn(canvas, 0, 0)
 
-    monkeypatch.setattr(diff, "get", lambda key: [[[1]]])
-    malformed_wave = EnemyManager(canvas, 1, spawn, [(0, 0)])
+    malformed_wave = enemy_manager_with_waves(
+        canvas, spawn, [(0, 0)], [[[1]]]
+    )
     with pytest.raises(ValueError, match="wave entry"):
         malformed_wave.update(0, canvas)
 
-    monkeypatch.setattr(diff, "get", lambda key: [[[999, 0]]])
-    unknown_enemy = EnemyManager(canvas, 1, spawn, [(0, 0)])
+    unknown_enemy = enemy_manager_with_waves(
+        canvas, spawn, [(0, 0)], [[[999, 0]]]
+    )
     with pytest.raises(KeyError, match="Enemy_Dictionary"):
         unknown_enemy.update(0, canvas)
 
-    monkeypatch.setattr(diff, "get", lambda key: [[ [[], 0] ]])
-    invalid_enemy_key = EnemyManager(canvas, 1, spawn, [(0, 0)])
+    invalid_enemy_key = enemy_manager_with_waves(
+        canvas, spawn, [(0, 0)], [[[[], 0]]]
+    )
     with pytest.raises(TypeError, match="hashable"):
         invalid_enemy_key.update(0, canvas)
 
-    monkeypatch.setattr(diff, "get", lambda key: [[[1, 0]]])
-    bad_index = EnemyManager(canvas, 1, spawn, [(0, 0)])
+    bad_index = enemy_manager_with_waves(
+        canvas, spawn, [(0, 0)], [[[1, 0]]]
+    )
     bad_index._EnemyManager__wave_progress = 2
     with pytest.raises(IndexError, match="Wave data"):
         bad_index.update(0, canvas)

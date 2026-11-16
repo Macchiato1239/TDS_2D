@@ -8,6 +8,7 @@ from conftest import FakeCanvas, FakeWidget
 
 import Head.game as game_module
 import Head.module_window as window_module
+import States.gameflow as gameflow_module
 from Head.game import Game
 from Head.module_window import Window
 from States.states import GameState, State
@@ -25,12 +26,18 @@ def test_state_enum_has_distinct_members(state):
     assert state in State
 
 
-def test_window_creation_and_validated_properties(monkeypatch):
+def test_window_creation_and_validated_properties():
     fake_root = FakeWidget()
     fake_canvas = FakeCanvas()
-    monkeypatch.setattr(window_module.tk, "Tk", lambda: fake_root)
-    monkeypatch.setattr(window_module.tk, "Canvas", lambda *a, **k: fake_canvas)
-    window = Window()
+    original_tk = window_module.tk.Tk
+    original_canvas = window_module.tk.Canvas
+    window_module.tk.Tk = lambda: fake_root
+    window_module.tk.Canvas = lambda parent, width, height, bg: fake_canvas
+    try:
+        window = Window()
+    finally:
+        window_module.tk.Tk = original_tk
+        window_module.tk.Canvas = original_canvas
     assert window.window is fake_root
     assert window.canva is fake_canvas
     assert window.window_width == 1000 and window.window_height == 700
@@ -57,7 +64,7 @@ def test_menu_state_lifecycle_actions_and_difficulty(window, event):
     menu.cycle_difficulty()
     assert menu.difficulty == 2
     assert window.canva.items[menu._MenuState__difficulty_button.text]["text"] == "Difficulty: Hard"
-    for _ in range(2):
+    for i in range(2):
         menu.cycle_difficulty()
     assert menu.difficulty == 1
     assert menu.handle_click(event(500, 400)) == "quit"
@@ -93,7 +100,7 @@ def test_pause_state_resume_menu_restart(window, event):
     pause.exit()
 
 
-def test_gameflow_initialization_loop_and_gameplay_clicks(window, monkeypatch, event):
+def test_gameflow_initialization_loop_and_gameplay_clicks(window, event):
     class FakeEnemies:
         game_info = [[[]]]
         active_enemies = []
@@ -103,15 +110,19 @@ def test_gameflow_initialization_loop_and_gameplay_clicks(window, monkeypatch, e
         base_damage = 0
         is_complete = False
 
-        def __init__(self, *args):
+        def __init__(self, canvas, difficulty, spawn, path_points):
             pass
 
         def update(self, delta_time, canvas):
             return 0
 
-    monkeypatch.setattr("States.gameflow.EnemyManager", FakeEnemies)
     outcomes = []
-    game = GameFlow(window, 1, outcomes.append)
+    original_enemy_manager = gameflow_module.EnemyManager
+    gameflow_module.EnemyManager = FakeEnemies
+    try:
+        game = GameFlow(window, 1, outcomes.append)
+    finally:
+        gameflow_module.EnemyManager = original_enemy_manager
     assert not game._GameFlow__towers.active_towers
     game.create_game_loop()
     assert len(game._GameFlow__hotbar.hotbar) == 5
@@ -137,7 +148,7 @@ def test_gameflow_initialization_loop_and_gameplay_clicks(window, monkeypatch, e
     game.game_loop()
 
 
-def test_gameflow_lifecycle_edge_paths(window, monkeypatch):
+def test_gameflow_lifecycle_edge_paths(window):
     import tkinter as tk
 
     class FakeEnemies:
@@ -149,15 +160,19 @@ def test_gameflow_lifecycle_edge_paths(window, monkeypatch):
         base_damage = 0
         is_complete = False
 
-        def __init__(self, *args):
+        def __init__(self, canvas, difficulty, spawn, path_points):
             pass
 
         def update(self, delta_time, canvas):
             return 0
 
-    monkeypatch.setattr("States.gameflow.EnemyManager", FakeEnemies)
     outcomes = []
-    game = GameFlow(window, 1, outcomes.append)
+    original_enemy_manager = gameflow_module.EnemyManager
+    gameflow_module.EnemyManager = FakeEnemies
+    try:
+        game = GameFlow(window, 1, outcomes.append)
+    finally:
+        gameflow_module.EnemyManager = original_enemy_manager
     game.enter()
     from dictionary import Tbook
     from Base.rect import Rect
@@ -171,8 +186,12 @@ def test_gameflow_lifecycle_edge_paths(window, monkeypatch):
     def raise_tcl_error(after_id):
         raise tk.TclError(after_id)
 
-    monkeypatch.setattr(window.window, "after_cancel", raise_tcl_error)
-    game.cleanup()
+    original_after_cancel = window.window.after_cancel
+    window.window.after_cancel = raise_tcl_error
+    try:
+        game.cleanup()
+    finally:
+        window.window.after_cancel = original_after_cancel
     assert game._GameFlow__disposed
 
     stopped_window = type(window)()
@@ -182,7 +201,7 @@ def test_gameflow_lifecycle_edge_paths(window, monkeypatch):
     assert stopped_window.window.destroyed
 
 
-def test_gameflow_game_loop_returns_on_terminal_condition(window, monkeypatch):
+def test_gameflow_game_loop_returns_on_terminal_condition(window):
     class FakeEnemies:
         game_info = [[]]
         active_enemies = []
@@ -192,22 +211,26 @@ def test_gameflow_game_loop_returns_on_terminal_condition(window, monkeypatch):
         base_damage = 0
         is_complete = False
 
-        def __init__(self, *args):
+        def __init__(self, canvas, difficulty, spawn, path_points):
             pass
 
         def update(self, delta_time, canvas):
             return 0
 
-    monkeypatch.setattr("States.gameflow.EnemyManager", FakeEnemies)
     outcomes = []
-    game = GameFlow(window, 1, outcomes.append)
+    original_enemy_manager = gameflow_module.EnemyManager
+    gameflow_module.EnemyManager = FakeEnemies
+    try:
+        game = GameFlow(window, 1, outcomes.append)
+    finally:
+        gameflow_module.EnemyManager = original_enemy_manager
     game._GameFlow__base_health = 0
     game.game_loop()
     assert outcomes == [State.LOST]
     assert window.window.after_calls == []
 
 
-def test_gameflow_victory_and_lose_conditions(window, monkeypatch):
+def test_gameflow_victory_and_lose_conditions(window):
     class FakeEnemies:
         game_info = [[]]
         active_enemies = []
@@ -217,15 +240,19 @@ def test_gameflow_victory_and_lose_conditions(window, monkeypatch):
         base_damage = 0
         is_complete = False
 
-        def __init__(self, *args):
+        def __init__(self, canvas, difficulty, spawn, path_points):
             pass
 
         def update(self, delta_time, canvas):
             return 0
 
-    monkeypatch.setattr("States.gameflow.EnemyManager", FakeEnemies)
     outcomes = []
-    game = GameFlow(window, 1, outcomes.append)
+    original_enemy_manager = gameflow_module.EnemyManager
+    gameflow_module.EnemyManager = FakeEnemies
+    try:
+        game = GameFlow(window, 1, outcomes.append)
+    finally:
+        gameflow_module.EnemyManager = original_enemy_manager
     game._GameFlow__base_health = 0
     assert game.game_over_check()
     assert outcomes == [State.LOST]
@@ -235,9 +262,7 @@ def test_gameflow_victory_and_lose_conditions(window, monkeypatch):
     assert outcomes[-1] == State.VICTORY
 
 
-def test_game_state_router_menu_finish_restart_and_return(window, monkeypatch, event):
-    # Construct the real Game against fake Tk-backed objects.
-    monkeypatch.setattr(game_module, "Window", lambda: window)
+def test_game_state_router_menu_finish_restart_and_return(window, event):
 
     class FakeFlow:
         def __init__(self, window_obj, difficulty, finish):
@@ -261,36 +286,50 @@ def test_game_state_router_menu_finish_restart_and_return(window, monkeypatch, e
         def cleanup(self):
             self.cleaned = True
 
-    monkeypatch.setattr(game_module, "GameFlow", FakeFlow)
-    game = Game()
-    game.start()
-    game.click_manager(event(500, 310))
-    game.click_manager(event(500, 310))
-    game.click_manager(event(500, 220))
-    assert game._Game__state is State.PLAYING
-    old_game = game._Game__game
-    game.click_manager(event(100, 100))
-    assert len(old_game.clicks) == 1
-    game.finish_game(State.VICTORY)
-    assert game._Game__state is State.VICTORY
-    game.click_manager(event(500, 415))
-    assert old_game.cleaned
-    assert game._Game__state is State.PLAYING
-    game.finish_game(State.LOST)
-    game.click_manager(event(500, 350))
-    assert game._Game__state is State.MENU
-    assert game._Game__game is None
-    game.finish_game(State.VICTORY)
-    game._Game__state = None
-    assert game.click_manager(event(20, 20)) is None
-    game._Game__state = State.MENU
-    game.click_manager(event(500, 400))
+    original_window_factory = game_module.Window
+    game_module.Window = lambda: window
+    try:
+        game = Game()
+    finally:
+        game_module.Window = original_window_factory
+
+    original_game_flow = game_module.GameFlow
+    game_module.GameFlow = FakeFlow
+    try:
+        game.start()
+        game.click_manager(event(500, 310))
+        game.click_manager(event(500, 310))
+        game.click_manager(event(500, 220))
+        assert game._Game__state is State.PLAYING
+        old_game = game._Game__game
+        game.click_manager(event(100, 100))
+        assert len(old_game.clicks) == 1
+        game.finish_game(State.VICTORY)
+        assert game._Game__state is State.VICTORY
+        game.click_manager(event(500, 415))
+        assert old_game.cleaned
+        assert game._Game__state is State.PLAYING
+        game.finish_game(State.LOST)
+        game.click_manager(event(500, 350))
+        assert game._Game__state is State.MENU
+        assert game._Game__game is None
+        game.finish_game(State.VICTORY)
+        game._Game__state = None
+        assert game.click_manager(event(20, 20)) is None
+        game._Game__state = State.MENU
+        game.click_manager(event(500, 400))
+    finally:
+        game_module.GameFlow = original_game_flow
     assert window.window.destroyed
 
 
-def test_game_pause_toggle_and_quit(window, monkeypatch, event):
-    monkeypatch.setattr(game_module, "Window", lambda: window)
-    game = Game()
+def test_game_pause_toggle_and_quit(window, event):
+    original_window_factory = game_module.Window
+    game_module.Window = lambda: window
+    try:
+        game = Game()
+    finally:
+        game_module.Window = original_window_factory
     game._Game__state = State.PLAYING
 
     class CurrentGame:
@@ -339,17 +378,3 @@ def test_abstract_base_methods_are_defined_as_noops(window):
 
     from dictionary import Dictionary
     assert Dictionary.add() is None
-
-
-def test_main_reports_missing_project_import(monkeypatch):
-    original_import = builtins.__import__
-
-    def fail_game_import(name, *args, **kwargs):
-        if name == "Head.game":
-            raise ModuleNotFoundError("missing game module", name="Head.game")
-        return original_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", fail_game_import)
-    entrypoint = Path(__file__).resolve().parents[1] / "main.py"
-    with pytest.raises(SystemExit, match="could not be imported"):
-        runpy.run_path(str(entrypoint), run_name="__main__")

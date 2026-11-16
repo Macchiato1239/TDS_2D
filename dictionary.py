@@ -104,7 +104,7 @@ class Tower_Dictionary(Dictionary):
             f"Tower {key!r} has unsupported type {tower_type!r}"
         )
 
-
+# === ===
 Ebook = Enemy_Dictionary()
 
 Ebook.add("Normal", 1, 6, 0.5, "#baff7d", 20, 20)
@@ -116,6 +116,7 @@ Ebook.add("Elite abnormal", 6, 150, 0.5, "#076f00", 27, 27)
 Ebook.add("Speedy Boss", 7, 500, 0.8, "#005e94", 30, 30)
 Ebook.add("Giant Boss", 8, 2000, 0.2, "black", 35, 35)
 
+# === ===
 Tbook = Tower_Dictionary()
 
 Tbook.add(type="dps", key=1, name="soldier", cost=250, color="red",

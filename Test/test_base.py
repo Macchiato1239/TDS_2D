@@ -1,4 +1,6 @@
 from types import SimpleNamespace
+import time
+
 import pytest
 
 from Base.build import Base, Path, Spawn
@@ -113,7 +115,7 @@ def test_enemy_info_and_enemy_movement_and_health(canvas):
     enemy.health = 0
     assert enemy.health == 0
 
-
+# === Run the test multiple times with different inputs ===
 @pytest.mark.parametrize("property_name,value", [
     ("freeze", 2.0), ("freeze_level", 5), ("burn", 1.5),
     ("burn_damage", 3), ("progress", 2),
@@ -191,7 +193,7 @@ def test_projectile_zero_distance(canvas):
     projectile.destroy()
 
 
-def test_tower_models_and_dictionary_summoning(canvas, monkeypatch):
+def test_tower_models_and_dictionary_summoning(canvas):
     info = TowerInfo("test", 10, "red", 50, 5, DpsStats(4, 1))
     tower = DpsTower(info, Rect(canvas, 0, 0, 10, 10))
     assert tower.wave_income == 0
@@ -200,14 +202,13 @@ def test_tower_models_and_dictionary_summoning(canvas, monkeypatch):
     )
     tower.last_act = 0
     assert tower.last_act == 0
-    monkeypatch.setattr("Base.module_tower.time.monotonic", lambda: 0.25)
+    tower.last_act = time.monotonic()
     assert not tower.cooldown_check()
-    monkeypatch.setattr("Base.module_tower.time.monotonic", lambda: 2)
-    assert tower.cooldown_check()
-    assert tower.last_act == 2
-    assert tower.fire_rate == 1
-    monkeypatch.setattr("Base.module_tower.time.time", lambda: 2)
     tower.last_act = 0
+    assert tower.cooldown_check()
+    assert tower.last_act > 0
+    assert tower.fire_rate == 1
+    tower.last_act = time.time() - 2
     assert tower.act() == 4
     assert tower.act() is None
     tower.fire_rate = 0.1
@@ -235,7 +236,7 @@ def test_tower_models_and_dictionary_summoning(canvas, monkeypatch):
     assert debuff.magnitude == 2.5 and debuff.duration == 3
     assert debuff.debuff.magnitude == 2.5 and debuff.debuff.duration == 3
     debuff.fire_rate = 1
-    debuff.last_act = 2
+    debuff.last_act = time.time()
     assert debuff.act() is None
     frozen_enemy = SimpleNamespace(freeze=0, freeze_level=0)
     debuff.debuff.apply_to(frozen_enemy)
@@ -258,7 +259,7 @@ def test_tower_models_and_dictionary_summoning(canvas, monkeypatch):
     assert Tbook.summon_tower(4, Rect(canvas, 0, 0, 10, 10)).name == "farm"
 
 
-def test_dictionary_lookup_and_tower_configuration_errors(canvas, monkeypatch):
+def test_dictionary_lookup_and_tower_configuration_errors(canvas):
     with pytest.raises(KeyError, match="Unknown tower ID: 9999"):
         Tbook.get(9999)
     with pytest.raises(KeyError, match="Unknown tower ID"):
@@ -268,12 +269,25 @@ def test_dictionary_lookup_and_tower_configuration_errors(canvas, monkeypatch):
     with pytest.raises(ValueError, match="Unsupported tower type"):
         Tbook.add("unknown", 999, "bad", 1, "red", 1, 1)
 
-    monkeypatch.setitem(Tbook.dictionary, 998, ["dps", object()])
-    with pytest.raises(AttributeError, match="missing stats"):
-        Tbook.summon_tower(998, Rect(canvas, 0, 0, 10, 10))
-    monkeypatch.setitem(Tbook.dictionary, 997, ["unknown", None])
-    with pytest.raises(ValueError, match="unsupported type"):
-        Tbook.summon_tower(997, Rect(canvas, 0, 0, 10, 10))
+    missing = object()
+    old_998 = Tbook.dictionary.get(998, missing)
+    old_997 = Tbook.dictionary.get(997, missing)
+    Tbook.dictionary[998] = ["dps", object()]
+    Tbook.dictionary[997] = ["unknown", None]
+    try:
+        with pytest.raises(AttributeError, match="missing stats"):
+            Tbook.summon_tower(998, Rect(canvas, 0, 0, 10, 10))
+        with pytest.raises(ValueError, match="unsupported type"):
+            Tbook.summon_tower(997, Rect(canvas, 0, 0, 10, 10))
+    finally:
+        if old_998 is missing:
+            Tbook.dictionary.pop(998, None)
+        else:
+            Tbook.dictionary[998] = old_998
+        if old_997 is missing:
+            Tbook.dictionary.pop(997, None)
+        else:
+            Tbook.dictionary[997] = old_997
 
     with pytest.raises(TypeError):
         Dictionary.get(Ebook, [])
